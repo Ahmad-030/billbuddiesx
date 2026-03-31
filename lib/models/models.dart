@@ -31,6 +31,7 @@ class Expense {
   List<ExpenseParticipant> participants;
   DateTime date;
   String? category;
+  bool isSettlement; // NEW: marks this as a settlement payment
 
   Expense({
     required this.id,
@@ -40,29 +41,32 @@ class Expense {
     required this.participants,
     required this.date,
     this.category,
+    this.isSettlement = false,
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'description': description,
-        'amount': amount,
-        'payerId': payerId,
-        'participants': participants.map((p) => p.toJson()).toList(),
-        'date': date.toIso8601String(),
-        'category': category,
-      };
+    'id': id,
+    'description': description,
+    'amount': amount,
+    'payerId': payerId,
+    'participants': participants.map((p) => p.toJson()).toList(),
+    'date': date.toIso8601String(),
+    'category': category,
+    'isSettlement': isSettlement,
+  };
 
   factory Expense.fromJson(Map<String, dynamic> j) => Expense(
-        id: j['id'],
-        description: j['description'],
-        amount: (j['amount'] as num).toDouble(),
-        payerId: j['payerId'],
-        participants: (j['participants'] as List)
-            .map((p) => ExpenseParticipant.fromJson(p))
-            .toList(),
-        date: DateTime.parse(j['date']),
-        category: j['category'],
-      );
+    id: j['id'],
+    description: j['description'],
+    amount: (j['amount'] as num).toDouble(),
+    payerId: j['payerId'],
+    participants: (j['participants'] as List)
+        .map((p) => ExpenseParticipant.fromJson(p))
+        .toList(),
+    date: DateTime.parse(j['date']),
+    category: j['category'],
+    isSettlement: j['isSettlement'] ?? false,
+  );
 }
 
 class Group {
@@ -83,34 +87,43 @@ class Group {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'members': members.map((m) => m.toJson()).toList(),
-        'expenses': expenses.map((e) => e.toJson()).toList(),
-        'createdAt': createdAt.toIso8601String(),
-        'emoji': emoji,
-      };
+    'id': id,
+    'name': name,
+    'members': members.map((m) => m.toJson()).toList(),
+    'expenses': expenses.map((e) => e.toJson()).toList(),
+    'createdAt': createdAt.toIso8601String(),
+    'emoji': emoji,
+  };
 
   factory Group.fromJson(Map<String, dynamic> j) => Group(
-        id: j['id'],
-        name: j['name'],
-        members: (j['members'] as List).map((m) => AppMember.fromJson(m)).toList(),
-        expenses: (j['expenses'] as List).map((e) => Expense.fromJson(e)).toList(),
-        createdAt: DateTime.parse(j['createdAt']),
-        emoji: j['emoji'] ?? '👥',
-      );
+    id: j['id'],
+    name: j['name'],
+    members: (j['members'] as List).map((m) => AppMember.fromJson(m)).toList(),
+    expenses: (j['expenses'] as List).map((e) => Expense.fromJson(e)).toList(),
+    createdAt: DateTime.parse(j['createdAt']),
+    emoji: j['emoji'] ?? '👥',
+  );
 
-  double get totalExpenses => expenses.fold(0, (sum, e) => sum + e.amount);
+  double get totalExpenses =>
+      expenses.where((e) => !e.isSettlement).fold(0, (sum, e) => sum + e.amount);
 
   /// Returns net balance per member (positive = owed money, negative = owes money)
   Map<String, double> get balances {
     final Map<String, double> bal = {for (var m in members) m.id: 0.0};
     for (final exp in expenses) {
-      // Payer gets credited
-      bal[exp.payerId] = (bal[exp.payerId] ?? 0) + exp.amount;
-      // Each participant is debited their share
-      for (final p in exp.participants) {
-        bal[p.memberId] = (bal[p.memberId] ?? 0) - p.share;
+      if (exp.isSettlement) {
+        // Settlement: payer reduces their debt, recipient reduces what they're owed
+        bal[exp.payerId] = (bal[exp.payerId] ?? 0) + exp.amount;
+        for (final p in exp.participants) {
+          bal[p.memberId] = (bal[p.memberId] ?? 0) - p.share;
+        }
+      } else {
+        // Normal expense: payer gets credited
+        bal[exp.payerId] = (bal[exp.payerId] ?? 0) + exp.amount;
+        // Each participant is debited their share
+        for (final p in exp.participants) {
+          bal[p.memberId] = (bal[p.memberId] ?? 0) - p.share;
+        }
       }
     }
     return bal;

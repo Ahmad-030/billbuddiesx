@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import '../providers/app_provider.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
@@ -49,84 +50,157 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
 
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: NestedScrollView(
-          headerSliverBuilder: (context, _) => [
-            SliverAppBar(
-              expandedHeight: 160,
-              pinned: true,
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                onPressed: () => Navigator.pop(context),
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.bar_chart_rounded),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => ReportsScreen(groupId: group.id)),
-                  ),
+
+        // ── Simple AppBar — no SliverAppBar, no clipping issues ──
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () => Navigator.pop(context),
+          ),
+          titleSpacing: 0,
+          title: Row(
+            children: [
+              // Group emoji bubble
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                      colors: [AppTheme.primary, AppTheme.accent]),
+                  borderRadius: BorderRadius.circular(13),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primary.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                PopupMenuButton<String>(
-                  onSelected: (val) async {
-                    if (val == 'delete') {
-                      final confirm = await _confirmDelete(context);
-                      if (confirm == true) {
-                        await provider.deleteGroup(group.id);
-                        if (context.mounted) Navigator.pop(context);
-                      }
-                    }
-                  },
-                  itemBuilder: (_) => [
-                    PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          const Icon(Icons.delete_outline_rounded,
-                              color: AppTheme.error, size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Delete Group',
-                            style: GoogleFonts.poppins(
-                                color: AppTheme.error, fontSize: 13),
-                          ),
-                        ],
+                child: Center(
+                  child: Text(group.emoji,
+                      style: const TextStyle(fontSize: 20)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      group.name,
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? AppTheme.darkText : AppTheme.lightText,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      '${group.members.length} members  •  $sym${group.totalExpenses.toStringAsFixed(2)} total',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: isDark
+                            ? AppTheme.darkTextSub
+                            : AppTheme.lightTextSub,
                       ),
                     ),
                   ],
                 ),
-              ],
-              flexibleSpace: FlexibleSpaceBar(
-                background: _buildGroupHeader(group, sym, isDark),
               ),
-              bottom: TabBar(
-                controller: _tabCtrl,
-                indicatorColor: AppTheme.primary,
-                indicatorWeight: 3,
-                labelStyle:
-                GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13),
-                unselectedLabelStyle: GoogleFonts.poppins(fontSize: 13),
-                labelColor: AppTheme.primary,
-                unselectedLabelColor:
-                isDark ? AppTheme.darkTextSub : AppTheme.lightTextSub,
-                tabs: const [
-                  Tab(text: 'Expenses'),
-                  Tab(text: 'Balances'),
-                  Tab(text: 'Settle Up'),
-                ],
-              ),
-            ),
-          ],
-          body: TabBarView(
-            controller: _tabCtrl,
-            children: [
-              _ExpensesTab(group: group, symbol: sym, provider: provider),
-              _BalancesTab(group: group, symbol: sym, isDark: isDark),
-              _SettleTab(group: group, symbol: sym, isDark: isDark),
             ],
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.bar_chart_rounded),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => ReportsScreen(groupId: group.id)),
+              ),
+            ),
+            PopupMenuButton<String>(
+              onSelected: (val) async {
+                if (val == 'delete') {
+                  final confirm = await _confirmDelete(context);
+                  if (confirm == true) {
+                    await provider.deleteGroup(group.id);
+                    if (context.mounted) Navigator.pop(context);
+                  }
+                }
+              },
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.delete_outline_rounded,
+                          color: AppTheme.error, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Delete Group',
+                        style: GoogleFonts.poppins(
+                            color: AppTheme.error, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+          // TabBar sits cleanly as bottom of AppBar
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(49),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color:
+                  isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+                ),
+                TabBar(
+                  controller: _tabCtrl,
+                  indicatorColor: AppTheme.primary,
+                  indicatorWeight: 3,
+                  labelStyle: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600, fontSize: 13),
+                  unselectedLabelStyle: GoogleFonts.poppins(fontSize: 13),
+                  labelColor: AppTheme.primary,
+                  unselectedLabelColor:
+                  isDark ? AppTheme.darkTextSub : AppTheme.lightTextSub,
+                  tabs: const [
+                    Tab(text: 'Expenses'),
+                    Tab(text: 'Balances'),
+                    Tab(text: 'Settle Up'),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
+
+        // ── Body is just the TabBarView ──
+        body: TabBarView(
+          controller: _tabCtrl,
+          children: [
+            _ExpensesTab(group: group, symbol: sym, provider: provider),
+            _BalancesTab(group: group, symbol: sym, isDark: isDark),
+            _SettleTab(
+              group: group,
+              symbol: sym,
+              isDark: isDark,
+              onRecordPayment: (fromId, toId, amount) =>
+                  _recordPayment(context, provider, group, fromId, toId, amount),
+            ),
+          ],
+        ),
+
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => Navigator.push(
             context,
@@ -138,61 +212,164 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
             'Add Expense',
             style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
           ),
-        ).animate().scale(delay: 300.ms, duration: 400.ms, curve: Curves.elasticOut),
+        ).animate().scale(
+            delay: 300.ms, duration: 400.ms, curve: Curves.elasticOut),
       );
     });
   }
 
-  Widget _buildGroupHeader(Group group, String sym, bool isDark) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-          20, MediaQuery.of(context).padding.top + 56, 20, 12),
-      child: Row(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                  colors: [AppTheme.primary, AppTheme.accent]),
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primary.withValues(alpha: 0.4),
-                  blurRadius: 15,
-                  spreadRadius: 2,
-                ),
-              ],
+  Future<void> _recordPayment(
+      BuildContext context,
+      AppProvider provider,
+      Group group,
+      String fromId,
+      String toId,
+      double suggestedAmount,
+      ) async {
+    final TextEditingController amountCtrl =
+    TextEditingController(text: suggestedAmount.toStringAsFixed(2));
+    final sym = AppConstants.getCurrencySymbol(provider.currency);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor:
+        provider.isDark ? AppTheme.darkCard : AppTheme.lightSurface,
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.success.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.handshake_rounded,
+                  color: AppTheme.success, size: 20),
             ),
-            child: Center(
-                child: Text(group.emoji, style: const TextStyle(fontSize: 30))),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  group.name,
-                  style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? AppTheme.darkText : AppTheme.lightText,
+            const SizedBox(width: 10),
+            Text('Record Payment',
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w700, fontSize: 16)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: provider.isDark
+                    ? AppTheme.darkCardAlt
+                    : AppTheme.lightCard,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _SmallAvatar(
+                      name: group.getMember(fromId)?.name ?? '?',
+                      color: AppTheme.error),
+                  const SizedBox(width: 8),
+                  Column(
+                    children: [
+                      const Icon(Icons.arrow_forward_rounded,
+                          size: 16, color: AppTheme.darkTextSub),
+                      Text('pays',
+                          style: GoogleFonts.poppins(
+                              fontSize: 10, color: AppTheme.darkTextSub)),
+                    ],
                   ),
-                ),
-                Text(
-                  '${group.members.length} members • $sym${group.totalExpenses.toStringAsFixed(2)} total',
-                  style: GoogleFonts.poppins(
+                  const SizedBox(width: 8),
+                  _SmallAvatar(
+                      name: group.getMember(toId)?.name ?? '?',
+                      color: AppTheme.success),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text('Amount paid',
+                style: GoogleFonts.poppins(
                     fontSize: 12,
-                    color:
-                    isDark ? AppTheme.darkTextSub : AppTheme.lightTextSub,
-                  ),
-                ),
-              ],
+                    fontWeight: FontWeight.w600,
+                    color: provider.isDark
+                        ? AppTheme.darkTextSub
+                        : AppTheme.lightTextSub)),
+            const SizedBox(height: 6),
+            TextField(
+              controller: amountCtrl,
+              keyboardType:
+              const TextInputType.numberWithOptions(decimal: true),
+              autofocus: true,
+              decoration: InputDecoration(
+                prefixText: '$sym ',
+                prefixStyle: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w700, color: AppTheme.success),
+                hintText: '0.00',
+              ),
+              style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w700, fontSize: 18),
             ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel',
+                style: GoogleFonts.poppins(color: AppTheme.darkTextSub)),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.success,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            icon: const Icon(Icons.check_rounded, size: 16),
+            label: Text('Record',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
           ),
         ],
+      ),
+    );
+
+    if (confirmed != true) return;
+    final amount = double.tryParse(amountCtrl.text.trim());
+    if (amount == null || amount <= 0) return;
+
+    final settlement = Expense(
+      id: const Uuid().v4(),
+      description:
+      '${group.getMember(fromId)?.name ?? '?'} → ${group.getMember(toId)?.name ?? '?'} (Settlement)',
+      amount: amount,
+      payerId: fromId,
+      participants: [ExpenseParticipant(memberId: toId, share: amount)],
+      date: DateTime.now(),
+      category: 'Settlement',
+      isSettlement: true,
+    );
+
+    await provider.addExpense(group.id, settlement);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded,
+                color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Text('Payment recorded!',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          ],
+        ),
+        backgroundColor: AppTheme.success,
+        behavior: SnackBarBehavior.floating,
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -222,6 +399,43 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
   }
 }
 
+// ── Small Avatar for dialog ───────────────────────────────────────────────────
+
+class _SmallAvatar extends StatelessWidget {
+  final String name;
+  final Color color;
+  const _SmallAvatar({required this.name, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.15),
+            shape: BoxShape.circle,
+            border: Border.all(color: color.withOpacity(0.4), width: 2),
+          ),
+          child: Center(
+            child: Text(
+              name[0].toUpperCase(),
+              style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w800, color: color, fontSize: 16),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(name,
+            style: GoogleFonts.poppins(
+                fontSize: 11, fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+}
+
 // ── Expenses Tab ─────────────────────────────────────────────────────────────
 
 class _ExpensesTab extends StatelessWidget {
@@ -235,7 +449,9 @@ class _ExpensesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = provider.isDark;
-    if (group.expenses.isEmpty) {
+    final allExpenses = group.expenses;
+
+    if (allExpenses.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -257,9 +473,9 @@ class _ExpensesTab extends StatelessWidget {
     }
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-      itemCount: group.expenses.length,
+      itemCount: allExpenses.length,
       itemBuilder: (context, i) {
-        final exp = group.expenses[i];
+        final exp = allExpenses[i];
         final payer = group.getMember(exp.payerId);
         return _ExpenseCard(
           expense: exp,
@@ -298,13 +514,22 @@ class _ExpenseCard extends StatelessWidget {
   });
 
   static const _catEmojis = {
-    'Food': '🍔', 'Transport': '🚗', 'Accommodation': '🏨',
-    'Entertainment': '🎉', 'Shopping': '🛒', 'Utilities': '⚡', 'Other': '💸',
+    'Food': '🍔',
+    'Transport': '🚗',
+    'Accommodation': '🏨',
+    'Entertainment': '🎉',
+    'Shopping': '🛒',
+    'Utilities': '⚡',
+    'Settlement': '🤝',
+    'Other': '💸',
   };
 
   @override
   Widget build(BuildContext context) {
+    final isSettlement = expense.isSettlement;
     final emoji = _catEmojis[expense.category] ?? '💸';
+    final accentColor = isSettlement ? AppTheme.success : AppTheme.accent;
+
     return Dismissible(
       key: Key(expense.id),
       direction: DismissDirection.endToStart,
@@ -323,10 +548,14 @@ class _ExpenseCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.darkCard : AppTheme.lightSurface,
+          color: isSettlement
+              ? AppTheme.success.withOpacity(0.05)
+              : (isDark ? AppTheme.darkCard : AppTheme.lightSurface),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-              color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder),
+              color: isSettlement
+                  ? AppTheme.success.withOpacity(0.3)
+                  : (isDark ? AppTheme.darkBorder : AppTheme.lightBorder)),
         ),
         child: Row(
           children: [
@@ -334,7 +563,7 @@ class _ExpenseCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppTheme.primary.withValues(alpha: 0.1),
+                color: accentColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -345,12 +574,32 @@ class _ExpenseCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    expense.description,
-                    style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600, fontSize: 14),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          expense.description,
+                          style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600, fontSize: 14),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (isSettlement)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.success.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text('Settled',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.success)),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -370,7 +619,7 @@ class _ExpenseCard extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.accent,
+                color: accentColor,
               ),
             ),
           ],
@@ -417,9 +666,9 @@ class _BalancesTab extends StatelessWidget {
                     fontWeight: FontWeight.w800),
               ),
               Text(
-                'across ${group.expenses.length} expenses',
-                style:
-                GoogleFonts.poppins(color: Colors.white70, fontSize: 11),
+                'across ${group.expenses.where((e) => !e.isSettlement).length} expenses',
+                style: GoogleFonts.poppins(
+                    color: Colors.white70, fontSize: 11),
               ),
             ],
           ),
@@ -556,9 +805,14 @@ class _SettleTab extends StatelessWidget {
   final Group group;
   final String symbol;
   final bool isDark;
+  final Function(String fromId, String toId, double amount) onRecordPayment;
 
-  const _SettleTab(
-      {required this.group, required this.symbol, required this.isDark});
+  const _SettleTab({
+    required this.group,
+    required this.symbol,
+    required this.isDark,
+    required this.onRecordPayment,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -577,8 +831,7 @@ class _SettleTab extends StatelessWidget {
                     fontSize: 22, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             Text('No debts to settle in this group.',
-                style:
-                GoogleFonts.poppins(color: AppTheme.darkTextSub)),
+                style: GoogleFonts.poppins(color: AppTheme.darkTextSub)),
           ],
         ),
       );
@@ -593,7 +846,6 @@ class _SettleTab extends StatelessWidget {
         final amount = s['amount'] as double;
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: isDark ? AppTheme.darkCard : AppTheme.lightSurface,
             borderRadius: BorderRadius.circular(16),
@@ -607,35 +859,76 @@ class _SettleTab extends StatelessWidget {
               ),
             ],
           ),
-          child: Row(
+          child: Column(
             children: [
-              _Avatar(name: from?.name ?? '?', color: AppTheme.error),
-              Expanded(
-                child: Column(
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
                   children: [
-                    Text(
-                      '$symbol${amount.toStringAsFixed(2)}',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                        color: AppTheme.warning,
+                    _Avatar(name: from?.name ?? '?', color: AppTheme.error),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Text(
+                            '$symbol${amount.toStringAsFixed(2)}',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                              color: AppTheme.warning,
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_rounded,
+                              size: 14, color: AppTheme.darkTextSub),
+                          Text(
+                            '${from?.name ?? '?'} pays ${to?.name ?? '?'}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: isDark
+                                  ? AppTheme.darkTextSub
+                                  : AppTheme.lightTextSub,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const Icon(Icons.arrow_forward_rounded,
-                        size: 14, color: AppTheme.darkTextSub),
-                    Text(
-                      '${from?.name ?? '?'} pays ${to?.name ?? '?'}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: isDark
-                            ? AppTheme.darkTextSub
-                            : AppTheme.lightTextSub,
-                      ),
-                    ),
+                    _Avatar(name: to?.name ?? '?', color: AppTheme.success),
                   ],
                 ),
               ),
-              _Avatar(name: to?.name ?? '?', color: AppTheme.success),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                        color: isDark
+                            ? AppTheme.darkBorder
+                            : AppTheme.lightBorder),
+                  ),
+                ),
+                child: TextButton.icon(
+                  onPressed: () => onRecordPayment(
+                    s['from'] as String,
+                    s['to'] as String,
+                    amount,
+                  ),
+                  icon: const Icon(Icons.check_circle_outline_rounded,
+                      color: AppTheme.success, size: 18),
+                  label: Text(
+                    'Mark as Paid',
+                    style: GoogleFonts.poppins(
+                      color: AppTheme.success,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 44),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(
+                          bottom: Radius.circular(16)),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         )
@@ -672,7 +965,8 @@ class _Avatar extends StatelessWidget {
       child: Center(
         child: Text(
           name[0].toUpperCase(),
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w800, color: color),
+          style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w800, color: color),
         ),
       ),
     );

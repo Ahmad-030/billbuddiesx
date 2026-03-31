@@ -156,20 +156,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
               ),
             ),
             // Bottom branding
-            Positioned(
-              bottom: 40,
-              left: 0,
-              right: 0,
-              child: Text(
-                'by DanaTypeApps',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: AppTheme.darkTextSub,
-                  letterSpacing: 1.5,
-                ),
-              ).animate().fadeIn(delay: 800.ms, duration: 500.ms),
-            ),
           ],
         ),
       ),

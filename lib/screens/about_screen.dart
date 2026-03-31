@@ -71,18 +71,7 @@ class AboutScreen extends StatelessWidget {
                     style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.w800),
                   ).animate().slideY(begin: 0.3, delay: 200.ms, duration: 400.ms).fadeIn(delay: 200.ms, duration: 400.ms),
                   const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primary.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Text(
-                      'Version 1.0.0',
-                      style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.primary, fontWeight: FontWeight.w600),
-                    ),
-                  ).animate().scale(delay: 350.ms, duration: 400.ms).fadeIn(delay: 350.ms, duration: 400.ms),
-                  const SizedBox(height: 16),
+
                   Text(
                     'Split bills. Track debts. Stay friends.',
                     style: GoogleFonts.poppins(fontSize: 14, color: isDark ? AppTheme.darkTextSub : AppTheme.lightTextSub),

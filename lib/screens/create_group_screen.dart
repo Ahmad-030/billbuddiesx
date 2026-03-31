@@ -141,17 +141,20 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             // Group name
             _SectionTitle('Group Name').animate().fadeIn(duration: 400.ms, delay: 150.ms),
             const SizedBox(height: 10),
-            TextField(
-              controller: _nameCtrl,
-              decoration: InputDecoration(
-                hintText: 'e.g., Trip to Bali, Roommates...',
-                prefixIcon: Text(_selectedEmoji,
-                    style: const TextStyle(fontSize: 20))
-                    .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .scaleXY(begin: 0.95, end: 1.05, duration: 1000.ms),
-              ),
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-            ).animate().slideX(begin: 0.1, duration: 400.ms, delay: 200.ms).fadeIn(duration: 400.ms, delay: 200.ms),
+            Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: TextField(
+                controller: _nameCtrl,
+                decoration: InputDecoration(
+                  hintText: 'e.g., Trip to Bali, Roommates...',
+                  prefixIcon: Text(_selectedEmoji,
+                      style: const TextStyle(fontSize: 30))
+                      .animate(onPlay: (c) => c.repeat(reverse: true))
+                      .scaleXY(begin: 0.65, end: 1.05, duration: 1000.ms),
+                ),
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+              ).animate().slideX(begin: 0.1, duration: 400.ms, delay: 200.ms).fadeIn(duration: 400.ms, delay: 200.ms),
+            ),
             const SizedBox(height: 24),
 
             // Add members

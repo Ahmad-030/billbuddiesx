@@ -154,8 +154,6 @@ class SettingsScreen extends StatelessWidget {
                         .scaleXY(begin: 0.9, end: 1.1, duration: 1200.ms),
                     const SizedBox(height: 8),
                     Text('BillBuddiesX', style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16)),
-                    Text('by DanaTypeApps', style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.darkTextSub)),
-                    Text('v1.0.0', style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.darkTextSub)),
                   ],
                 ),
               ).animate().fadeIn(delay: 400.ms, duration: 400.ms),
