@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
@@ -32,7 +33,8 @@ class _HomeScreenState extends State<HomeScreen> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.exit_to_app_rounded, color: Colors.white, size: 18),
+              const Icon(Icons.exit_to_app_rounded,
+                  color: Colors.white, size: 18),
               const SizedBox(width: 10),
               Text(
                 'Press back again to exit',
@@ -43,7 +45,8 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: AppTheme.darkCard,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         ),
       );
@@ -75,7 +78,10 @@ class _HomeScreenState extends State<HomeScreen> {
             backgroundColor: AppTheme.primary,
           )
               .animate()
-              .scale(delay: 400.ms, duration: 400.ms, curve: Curves.elasticOut)
+              .scale(
+              delay: 400.ms,
+              duration: 400.ms,
+              curve: Curves.elasticOut)
               : null,
         );
       }),
@@ -99,8 +105,10 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         selectedItemColor: AppTheme.primary,
-        unselectedItemColor: isDark ? AppTheme.darkTextSub : AppTheme.lightTextSub,
-        selectedLabelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 11),
+        unselectedItemColor:
+        isDark ? AppTheme.darkTextSub : AppTheme.lightTextSub,
+        selectedLabelStyle:
+        GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 11),
         unselectedLabelStyle: GoogleFonts.poppins(fontSize: 11),
         items: const [
           BottomNavigationBarItem(
@@ -133,17 +141,20 @@ class _HomeScreenState extends State<HomeScreen> {
     return CustomScrollView(
       slivers: [
         SliverAppBar(
-          expandedHeight: 160, // ← reduced from 200
+          expandedHeight: 160,
           pinned: true,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           flexibleSpace: FlexibleSpaceBar(
-            background: _buildHeader(groups, sym, totalOwed, totalOwe, provider.isDark),
+            background: _buildHeader(
+                groups, sym, totalOwed, totalOwe, provider.isDark),
           ),
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(1),
             child: Container(
               height: 1,
-              color: provider.isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+              color: provider.isDark
+                  ? AppTheme.darkBorder
+                  : AppTheme.lightBorder,
             ),
           ),
         ),
@@ -181,7 +192,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildHeader(
       List<Group> groups, String sym, double owed, double owe, bool isDark) {
     return Container(
-      // ← reduced top padding from +16 to +8, bottom from 16 to 12
       padding: EdgeInsets.fromLTRB(
           20, MediaQuery.of(context).padding.top + 8, 20, 12),
       decoration: BoxDecoration(
@@ -200,27 +210,27 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(7), // ← reduced from 8
+                padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [AppTheme.primary, AppTheme.accent],
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text('💰', style: TextStyle(fontSize: 18)), // ← reduced from 20
+                child: const Text('💰', style: TextStyle(fontSize: 18)),
               ),
-              const SizedBox(width: 10), // ← reduced from 12
+              const SizedBox(width: 10),
               Text(
                 'BillBuddiesX',
                 style: GoogleFonts.poppins(
-                  fontSize: 20, // ← reduced from 22
+                  fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: isDark ? AppTheme.darkText : AppTheme.lightText,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12), // ← reduced from 16
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -256,43 +266,56 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ── Empty state: Lottie coin + text + CTA ──────────────────────────────────
   Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('🤝', style: TextStyle(fontSize: 72))
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .scaleXY(
-              begin: 0.9,
-              end: 1.1,
-              duration: 1500.ms,
-              curve: Curves.easeInOut),
-          const SizedBox(height: 24),
+          SizedBox(
+            width: 200,
+            height: 200,
+            child: Lottie.asset(
+              'assets/coin.json',
+              repeat: true,
+              fit: BoxFit.contain,
+            ),
+          ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
+
           Text(
             'No groups yet!',
-            style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700),
-          ),
+            style:
+            GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700),
+          )
+              .animate()
+              .fadeIn(delay: 200.ms, duration: 400.ms)
+              .slideY(begin: 0.2, delay: 200.ms, duration: 400.ms),
+
           const SizedBox(height: 8),
+
           Text(
             'Create your first group to start\nsplitting expenses with friends.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(fontSize: 14, color: AppTheme.darkTextSub),
-          ),
+            style: GoogleFonts.poppins(
+                fontSize: 14, color: AppTheme.darkTextSub),
+          ).animate().fadeIn(delay: 350.ms, duration: 400.ms),
+
           const SizedBox(height: 32),
+
           ElevatedButton.icon(
             onPressed: () => _openCreateGroup(context),
             icon: const Icon(Icons.add_rounded),
             label: const Text('Create Group'),
-          ),
+          ).animate().scale(
+              delay: 500.ms, duration: 400.ms, curve: Curves.elasticOut),
         ],
       ),
     );
   }
 
   void _openCreateGroup(BuildContext context) {
-    Navigator.push(
-        context, MaterialPageRoute(builder: (_) => const CreateGroupScreen()));
+    Navigator.push(context,
+        MaterialPageRoute(builder: (_) => const CreateGroupScreen()));
   }
 }
 
@@ -332,7 +355,9 @@ class _MiniStat extends StatelessWidget {
                   label,
                   style: GoogleFonts.poppins(
                     fontSize: 9,
-                    color: isDark ? AppTheme.darkTextSub : AppTheme.lightTextSub,
+                    color: isDark
+                        ? AppTheme.darkTextSub
+                        : AppTheme.lightTextSub,
                     fontWeight: FontWeight.w500,
                   ),
                   maxLines: 1,
@@ -388,7 +413,8 @@ class _GroupCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => GroupDetailScreen(groupId: group.id)),
+        MaterialPageRoute(
+            builder: (_) => GroupDetailScreen(groupId: group.id)),
       ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -423,7 +449,8 @@ class _GroupCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Center(
-                      child: Text(group.emoji, style: const TextStyle(fontSize: 26)),
+                      child: Text(group.emoji,
+                          style: const TextStyle(fontSize: 26)),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -436,7 +463,9 @@ class _GroupCard extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? AppTheme.darkText : AppTheme.lightText,
+                            color: isDark
+                                ? AppTheme.darkText
+                                : AppTheme.lightText,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -446,7 +475,9 @@ class _GroupCard extends StatelessWidget {
                           '${group.members.length} members • ${group.expenses.where((e) => !e.isSettlement).length} expenses',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: isDark ? AppTheme.darkTextSub : AppTheme.lightTextSub,
+                            color: isDark
+                                ? AppTheme.darkTextSub
+                                : AppTheme.lightTextSub,
                           ),
                         ),
                       ],
@@ -467,7 +498,9 @@ class _GroupCard extends StatelessWidget {
                         'total',
                         style: GoogleFonts.poppins(
                           fontSize: 10,
-                          color: isDark ? AppTheme.darkTextSub : AppTheme.lightTextSub,
+                          color: isDark
+                              ? AppTheme.darkTextSub
+                              : AppTheme.lightTextSub,
                         ),
                       ),
                     ],
@@ -481,7 +514,8 @@ class _GroupCard extends StatelessWidget {
                 child: Row(
                   children: [
                     ...group.members.take(5).map(
-                          (m) => _MemberAvatar(name: m.name, color: color),
+                          (m) =>
+                          _MemberAvatar(name: m.name, color: color),
                     ),
                     if (group.members.length > 5)
                       Container(
@@ -508,14 +542,18 @@ class _GroupCard extends StatelessWidget {
                       DateFormat('MMM d').format(group.createdAt),
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: isDark ? AppTheme.darkTextSub : AppTheme.lightTextSub,
+                        color: isDark
+                            ? AppTheme.darkTextSub
+                            : AppTheme.lightTextSub,
                       ),
                     ),
                     const SizedBox(width: 4),
                     Icon(
                       Icons.chevron_right_rounded,
                       size: 16,
-                      color: isDark ? AppTheme.darkTextSub : AppTheme.lightTextSub,
+                      color: isDark
+                          ? AppTheme.darkTextSub
+                          : AppTheme.lightTextSub,
                     ),
                   ],
                 ),

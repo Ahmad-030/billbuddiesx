@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../providers/app_provider.dart';
@@ -50,8 +51,6 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
 
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-
-        // ── Simple AppBar — no SliverAppBar, no clipping issues ──
         appBar: AppBar(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
@@ -63,7 +62,6 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
           titleSpacing: 0,
           title: Row(
             children: [
-              // Group emoji bubble
               Container(
                 width: 42,
                 height: 42,
@@ -152,7 +150,6 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
               ],
             ),
           ],
-          // TabBar sits cleanly as bottom of AppBar
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(49),
             child: Column(
@@ -184,8 +181,6 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
             ),
           ),
         ),
-
-        // ── Body is just the TabBarView ──
         body: TabBarView(
           controller: _tabCtrl,
           children: [
@@ -200,7 +195,6 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
             ),
           ],
         ),
-
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => Navigator.push(
             context,
@@ -456,17 +450,29 @@ class _ExpensesTab extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('🧾', style: TextStyle(fontSize: 60))
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scaleXY(begin: 0.9, end: 1.1, duration: 1200.ms),
-            const SizedBox(height: 16),
+            // ── Lottie coin animation for empty expenses state ──
+            SizedBox(
+              width: 180,
+              height: 180,
+              child: Lottie.asset(
+                'assets/coin.json',
+                repeat: true,
+                fit: BoxFit.contain,
+              ),
+            ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
+            const SizedBox(height: 8),
             Text('No expenses yet',
                 style: GoogleFonts.poppins(
-                    fontSize: 18, fontWeight: FontWeight.w700)),
+                    fontSize: 18, fontWeight: FontWeight.w700))
+                .animate()
+                .fadeIn(delay: 200.ms, duration: 400.ms)
+                .slideY(begin: 0.2, delay: 200.ms, duration: 400.ms),
             const SizedBox(height: 8),
             Text('Tap + to add your first expense',
                 style: GoogleFonts.poppins(
-                    color: AppTheme.darkTextSub, fontSize: 13)),
+                    color: AppTheme.darkTextSub, fontSize: 13))
+                .animate()
+                .fadeIn(delay: 350.ms, duration: 400.ms),
           ],
         ),
       );
@@ -822,16 +828,28 @@ class _SettleTab extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('🎉', style: TextStyle(fontSize: 64))
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scaleXY(begin: 0.9, end: 1.1, duration: 1000.ms),
-            const SizedBox(height: 16),
+            // ── Lottie coin animation for "all settled" state ──
+            SizedBox(
+              width: 180,
+              height: 180,
+              child: Lottie.asset(
+                'assets/coin.json',
+                repeat: true,
+                fit: BoxFit.contain,
+              ),
+            ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
+            const SizedBox(height: 8),
             Text('All settled up!',
                 style: GoogleFonts.poppins(
-                    fontSize: 22, fontWeight: FontWeight.w700)),
+                    fontSize: 22, fontWeight: FontWeight.w700))
+                .animate()
+                .fadeIn(delay: 200.ms, duration: 400.ms)
+                .slideY(begin: 0.2, delay: 200.ms, duration: 400.ms),
             const SizedBox(height: 8),
             Text('No debts to settle in this group.',
-                style: GoogleFonts.poppins(color: AppTheme.darkTextSub)),
+                style: GoogleFonts.poppins(color: AppTheme.darkTextSub))
+                .animate()
+                .fadeIn(delay: 350.ms, duration: 400.ms),
           ],
         ),
       );
